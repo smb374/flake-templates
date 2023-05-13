@@ -30,6 +30,9 @@
           crateName = "simple-binary";
           crateOutputs = config.nci.outputs.${crateName};
 
+          project = crateName;
+          binary = crateName;
+
           fenixStable = fenix.packages.${system}.stable;
           rustToolchain = fenixStable.withComponents [
             "rustc"
@@ -52,7 +55,7 @@
           # system.
 
           nci.toolchains.build = rustToolchain;
-          nci.projects.${crateName} = {
+          nci.projects.${project} = {
             relPath = "";
             depsOverrides = {
               inherit stdenv;
@@ -81,10 +84,26 @@
               };
             };
           };
-          nci.crates.${crateName}.export = true;
+          nci.crates.${crateName} = {
+            export = true;
+            overrides = {
+              add-inputs.overrideAttrs = old: {
+                buildInputs = (old.buildInputs or [ ]) ++ [
+                  # Add other build inputs here.
+                ];
+                nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+                  # Add other native build inputs here.
+                ];
+              };
+            };
+          };
 
           # Equivalent to  inputs'.nixpkgs.legacyPackages.hello;
           packages.default = crateOutputs.packages.release;
+
+          apps.default = {
+            program = "${config.packages.default}/bin/${binary}";
+          };
 
           devenv.shells.default = {
             name = crateName;
