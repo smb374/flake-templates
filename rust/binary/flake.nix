@@ -48,6 +48,49 @@
             # in this case we will set it to the clang stdenv
             override = old: { stdenv = pkgs.clangStdenv; };
           };
+
+          # Use mold for linking.
+          moldLinking = {
+            add-env.RUSTFLAGS = "-C linker=${lib.getExe pkgs.clang} -C link-arg=-fuse-ld=${lib.getExe pkgs.mold}";
+            add-inputs.overrideAttrs = old: {
+              nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+                pkgs.clang
+                pkgs.mold
+              ];
+            };
+          };
+
+          buildDeps = [
+            # Add build dependencies here.
+          ];
+
+          nativeBuildDeps = [
+            # Add native build dependencies here.
+          ];
+
+          runtimeDeps = [
+            # Add runtime dependencies here.
+          ];
+
+          # Inputs for building the dependencies of the crate.
+          crateDepsInputOverrides = old: {
+            buildInputs = (old.buildInputs or [ ]) ++ buildDeps ++ [
+              # Add dependency specific build dependencies here.
+            ];
+            nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ nativeBuildDeps ++ [
+              # Add dependency specific native build dependencies here.
+            ];
+          };
+
+          # Inputs for building the crate itself.
+          crateInputOverrides = old: {
+            buildInputs = (old.buildInputs or [ ]) ++ buildDeps ++ [
+              # Add crate specific build dependencies here.
+            ];
+            nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ nativeBuildDeps ++ [
+              # Add crate specific native build dependencies here.
+            ];
+          };
         in
         {
           # Per-system attributes can be defined here. The self' and inputs'
@@ -55,46 +98,25 @@
           # system.
 
           nci.toolchains.build = rustToolchain;
+          # Projectwise settings.
           nci.projects.${project} = {
             relPath = "";
             depsOverrides = {
-              inherit stdenv;
-              add-env.RUSTFLAGS = "-C linker=${lib.getExe pkgs.clang} -C link-arg=-fuse-ld=${lib.getExe pkgs.mold}";
-              add-inputs.overrideAttrs = old: {
-                nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
-                  # Use mold for linking.
-                  pkgs.clang
-                  pkgs.mold
-                ];
-              };
+              inherit stdenv moldLinking;
             };
             overrides = {
-              inherit stdenv;
-              add-env.RUSTFLAGS = "-C linker=${lib.getExe pkgs.clang} -C link-arg=-fuse-ld=${lib.getExe pkgs.mold}";
-              add-inputs.overrideAttrs = old: {
-                buildInputs = (old.buildInputs or [ ]) ++ [
-                  # Add other buildInputs below...
-                ];
-                nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
-                  # Use mold for linking.
-                  pkgs.clang
-                  pkgs.mold
-                  # Add other nativeBuildInputs below...
-                ];
-              };
+              inherit stdenv moldLinking;
             };
           };
+          # Crate settings.
           nci.crates.${crateName} = {
             export = true;
+            runtimeLibs = runtimeDeps;
+            depsOverrides = {
+              add-inputs.overrideAttrs = crateDepsInputOverrides;
+            };
             overrides = {
-              add-inputs.overrideAttrs = old: {
-                buildInputs = (old.buildInputs or [ ]) ++ [
-                  # Add other build inputs here.
-                ];
-                nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
-                  # Add other native build inputs here.
-                ];
-              };
+              add-inputs.overrideAttrs = crateInputOverrides;
             };
           };
 
