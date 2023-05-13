@@ -17,7 +17,7 @@
     };
   };
 
-  outputs = inputs@{ flake-parts, fenix, crane, ... }:
+  outputs = inputs@{ flake-parts, fenix, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         inputs.devenv.flakeModule
@@ -40,6 +40,11 @@
             "rust-analyzer"
             "llvm-tools-preview"
           ];
+
+          stdenv = {
+            # in this case we will set it to the clang stdenv
+            override = old: { stdenv = pkgs.clangStdenv; };
+          };
         in
         {
           # Per-system attributes can be defined here. The self' and inputs'
@@ -47,7 +52,35 @@
           # system.
 
           nci.toolchains.build = rustToolchain;
-          nci.projects.${crateName}.relPath = "";
+          nci.projects.${crateName} = {
+            relPath = "";
+            depsOverrides = {
+              inherit stdenv;
+              add-env.RUSTFLAGS = "-C linker=${lib.getExe pkgs.clang} -C link-arg=-fuse-ld=${lib.getExe pkgs.mold}";
+              add-inputs.overrideAttrs = old: {
+                nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+                  # Use mold for linking.
+                  pkgs.clang
+                  pkgs.mold
+                ];
+              };
+            };
+            overrides = {
+              inherit stdenv;
+              add-env.RUSTFLAGS = "-C linker=${lib.getExe pkgs.clang} -C link-arg=-fuse-ld=${lib.getExe pkgs.mold}";
+              add-inputs.overrideAttrs = old: {
+                buildInputs = (old.buildInputs or [ ]) ++ [
+                  # Add other buildInputs below...
+                ];
+                nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+                  # Use mold for linking.
+                  pkgs.clang
+                  pkgs.mold
+                  # Add other nativeBuildInputs below...
+                ];
+              };
+            };
+          };
           nci.crates.${crateName}.export = true;
 
           # Equivalent to  inputs'.nixpkgs.legacyPackages.hello;
