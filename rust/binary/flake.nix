@@ -51,13 +51,11 @@
 
           # Use mold for linking.
           moldLinking = {
-            add-env.RUSTFLAGS = "-C linker=${lib.getExe pkgs.clang} -C link-arg=-fuse-ld=${lib.getExe pkgs.mold}";
-            add-inputs.overrideAttrs = old: {
-              nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
-                pkgs.clang
-                pkgs.mold
-              ];
-            };
+            flags = "-C linker=${lib.getExe pkgs.clang} -C link-arg=-fuse-ld=${lib.getExe pkgs.mold}";
+            nativeBuildInputs = [
+              pkgs.clang
+              pkgs.mold
+            ];
           };
 
           commonBuildDeps = [
@@ -77,7 +75,10 @@
             buildInputs = (old.buildInputs or [ ]) ++ commonBuildDeps ++ [
               # Add dependency specific build dependencies here.
             ];
-            nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ commonNativeBuildDeps ++ [
+            nativeBuildInputs = (old.nativeBuildInputs or [ ])
+              ++ commonNativeBuildDeps
+              ++ moldLinking.nativeBuildInputs
+              ++ [
               # Add dependency specific native build dependencies here.
             ];
           };
@@ -87,7 +88,10 @@
             buildInputs = (old.buildInputs or [ ]) ++ commonBuildDeps ++ [
               # Add crate specific build dependencies here.
             ];
-            nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ commonNativeBuildDeps ++ [
+            nativeBuildInputs = (old.nativeBuildInputs or [ ])
+              ++ commonNativeBuildDeps
+              ++ moldLinking.nativeBuildInputsn
+              ++ [
               # Add crate specific native build dependencies here.
             ];
           };
@@ -98,27 +102,28 @@
           # system.
 
           nci.toolchains.build = rustToolchain;
+
           # Projectwise settings.
           nci.projects.${project} = {
             relPath = "";
-            depsOverrides = moldLinking // {
-              inherit stdenv;
-            };
-            overrides = moldLinking // {
-              inherit stdenv;
-            };
-          };
-          # Crate settings.
-          nci.crates.${crateName} = {
-            export = true;
             runtimeLibs = runtimeDeps;
             depsOverrides = {
+              inherit stdenv;
+              add-env.RUSTFLAGS = moldLinking.flags;
               add-inputs.overrideAttrs = crateDepsInputOverrides;
             };
             overrides = {
+              inherit stdenv;
+              add-env.RUSTFLAGS = moldLinking.flags;
               add-inputs.overrideAttrs = crateInputOverrides;
             };
           };
+
+          # Crate settings.
+          # If you need crate-level input overrides, add to depsOverrides & overrides of the crate.
+          # Note that if you need to override RUSTFLAGS, remember to add moldLinking.flags
+          # otherwise the mold linking will not work.
+          nci.crates.${crateName}.export = true;
 
           # Equivalent to  inputs'.nixpkgs.legacyPackages.hello;
           packages.default = crateOutputs.packages.release;
