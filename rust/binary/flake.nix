@@ -60,11 +60,11 @@
             };
           };
 
-          buildDeps = [
+          commonBuildDeps = [
             # Add build dependencies here.
           ];
 
-          nativeBuildDeps = [
+          commonNativeBuildDeps = [
             # Add native build dependencies here.
           ];
 
@@ -72,22 +72,22 @@
             # Add runtime dependencies here.
           ];
 
-          # Inputs for building the dependencies of the crate.
+          # Inputs for building the dependencies of the crate. (Dependencies listed in Cargo.toml & Cargo.lock)
           crateDepsInputOverrides = old: {
-            buildInputs = (old.buildInputs or [ ]) ++ buildDeps ++ [
+            buildInputs = (old.buildInputs or [ ]) ++ commonBuildDeps ++ [
               # Add dependency specific build dependencies here.
             ];
-            nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ nativeBuildDeps ++ [
+            nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ commonNativeBuildDeps ++ [
               # Add dependency specific native build dependencies here.
             ];
           };
 
           # Inputs for building the crate itself.
           crateInputOverrides = old: {
-            buildInputs = (old.buildInputs or [ ]) ++ buildDeps ++ [
+            buildInputs = (old.buildInputs or [ ]) ++ commonBuildDeps ++ [
               # Add crate specific build dependencies here.
             ];
-            nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ nativeBuildDeps ++ [
+            nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ commonNativeBuildDeps ++ [
               # Add crate specific native build dependencies here.
             ];
           };
