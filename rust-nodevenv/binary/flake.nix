@@ -128,6 +128,7 @@
           };
 
           devShells.default = pkgs.mkShell {
+            inputsFrom = [ crateOutputs.devShell ];
             packages = with pkgs; [
               git
             ];
