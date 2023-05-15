@@ -1,11 +1,11 @@
 {
   outputs = { self }: {
     templates.rust-binary = {
-      path = ./rust/binary;
+      path = "./rust/binary";
       description = "A simple Rust binary project.";
     };
     templates.rust-binary-nodevenv = {
-      path = ./rust/no-devenv/binary;
+      path = "./rust/no-devenv/binary";
       description = "A simple Rust binary project.";
     };
 
