@@ -5,7 +5,7 @@
       description = "A simple Rust binary project.";
     };
     templates.rust-binary-nodevenv = {
-      path = ./rust-no-devenv/binary;
+      path = ./rust-nodevenv/binary;
       description = "A simple Rust binary project.";
     };
 
