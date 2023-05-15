@@ -90,7 +90,7 @@
             ];
             nativeBuildInputs = (old.nativeBuildInputs or [ ])
               ++ commonNativeBuildDeps
-              ++ moldLinking.nativeBuildInputsn
+              ++ moldLinking.nativeBuildInputs
               ++ [
               # Add crate specific native build dependencies here.
             ];
