@@ -8,6 +8,10 @@
       path = ./rust-nodevenv/binary;
       description = "A simple Rust binary project.";
     };
+    templates.rust-lib-nodevenv = {
+      path = ./rust-nodevenv/library;
+      description = "A simple Rust library project.";
+    };
 
     templates.default = self.templates.rust-binary;
   };

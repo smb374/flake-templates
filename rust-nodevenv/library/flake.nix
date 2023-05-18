@@ -22,7 +22,7 @@
 
       perSystem = { config, self', inputs', lib, pkgs, system, ... }:
         let
-          crateName = "simple-binary";
+          crateName = "simple-library";
           crateOutputs = config.nci.outputs.${crateName};
 
           project = crateName;
@@ -118,14 +118,10 @@
           # If you need crate-level input overrides, add to depsOverrides & overrides of the crate.
           # Note that if you need to override RUSTFLAGS, remember to add moldLinking.flags
           # otherwise the mold linking will not work.
-          nci.crates.${crateName}.export = true;
+          nci.crates.${crateName}.export = true; # For cdylib.
 
           # Equivalent to  inputs'.nixpkgs.legacyPackages.hello;
           packages.default = crateOutputs.packages.release;
-
-          apps.default = {
-            program = "${config.packages.default}/bin/${binary}";
-          };
 
           devShells.default = pkgs.mkShell {
             inputsFrom = [ crateOutputs.devShell ];
